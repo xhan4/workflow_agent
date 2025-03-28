@@ -1,0 +1,7 @@
+llama_index
+vosk
+SpeechRecognition
+llama_index.vector_stores.chroma
+pyaudio
+llama_index.llms.ollama
+pynput
