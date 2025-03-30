@@ -28,7 +28,7 @@ def main():
     agent = ReActAgent.from_tools(
         [save_tool,date_tool,log_tool,query_tool], 
         llm=llm, 
-        verbose=False,   # 打印详细日志
+        verbose=True,   # 打印详细日志
         max_iterations=10,  # 最大循环次数 
         context=gen_prompt()
         )
@@ -40,8 +40,6 @@ def main():
             break
         start_time = time.time()
         response = agent.chat(user_input)
-        for msg in agent.memory.get(): 
-         print(f"{msg.role}: {msg.content}")
         clean_response = re.sub(r'\n?<think>.*?</think>\n?', '', response.response, flags=re.DOTALL)
         end_time = time.time()
         print(f"\033[94mAnswer({end_time-start_time:.2f}s): {clean_response}\033[0m")

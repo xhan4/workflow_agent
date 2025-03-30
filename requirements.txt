@@ -5,3 +5,5 @@ llama_index.vector_stores.chroma
 pyaudio
 llama_index.llms.ollama
 pynput
+openpyxl
+llama_index.embeddings.huggingface
