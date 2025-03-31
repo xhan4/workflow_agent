@@ -18,10 +18,12 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 load_dotenv()
-
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
+model_path = os.path.abspath(os.path.join("models", "bge-base-zh-v1.5"))
 Settings.embed_model = HuggingFaceEmbedding(
-    model_name=os.path.join("models", "bge-base-zh-v1.5"),
-    device="cpu"  # 可选 "cuda" 强制使用 GPU
+    model_name=model_path,
+    device="cpu",  # 可选 "cuda" 强制使用 GPU
+    cache_folder="../embedding_cache",  # 自定义缓存目录
 )
 Settings.llm = Ollama(
     model=os.getenv("MODEL_NAME"),  # 模型名称
