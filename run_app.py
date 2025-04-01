@@ -1,3 +1,4 @@
+import logging
 import re
 import os
 import time
@@ -13,20 +14,22 @@ from utils.query_engine_toolkit import QueryEngineToolkit
 from prompt import gen_prompt
 
 from dotenv import load_dotenv
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 load_dotenv()
 def main():
     save_tool = FunctionTool.from_defaults(fn=FileWriteToolkit(output_dir="./output").write_to_file)
     date_tool = FunctionTool.from_defaults(fn=DateQueryToolkit().get_current_date)
     log_tool = FunctionTool.from_defaults(fn=PoultryLogToolkit().generate_daily_report)
-    query_tool = FunctionTool.from_defaults(fn=QueryEngineToolkit().query_tool)
+    # query_tool = FunctionTool.from_defaults(fn=QueryEngineToolkit().query_tool)
     llm = Ollama(
         model=os.getenv("MODEL_NAME"),  # 模型名称
         base_url=os.getenv("BASE_URL"), 
         request_timeout=120,
     )
     agent = ReActAgent.from_tools(
-        [save_tool,date_tool,log_tool,query_tool], 
+        [save_tool,date_tool,log_tool], 
         llm=llm, 
         verbose=True,   # 打印详细日志
         max_iterations=10,  # 最大循环次数 

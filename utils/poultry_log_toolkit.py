@@ -48,17 +48,16 @@ class PoultryLogToolkit():
     
     def generate_daily_report(
         self,
-        farm_id: str,
         date: str,
     ) -> Dict[str, Any]:
         """生成某一天的养殖场日志报告，并保存到文件
         
-        Args:
-            farm_id: 养殖场编码（GB/T 38156-2019）
+        Args
+
             date: 日期（YYYY-MM-DD）
 
         Returns:
-            包含文件名、日志内容,及文件存放的路径，此时已成功生成日志
+            包含文件名、日志内容,及文件存放的路径,以及状态，状态success为成功
             
         Raises:
             ValueError: 日期格式或日志格式校验失败
@@ -68,7 +67,7 @@ class PoultryLogToolkit():
             raise ValueError("日期格式必须为YYYY-MM-DD")
         # 初始化日志条目 [[3]]
         log_entries = []
-        metrics = self.data_provider.generate_sensor_data(farm_id, "鸡舍001", date)
+        metrics = self.data_provider.generate_sensor_data("鸡舍001", date)
         
         # 自动预警逻辑增强
         if metrics.get('temperature', 0) > 25:
@@ -113,7 +112,7 @@ class PoultryLogToolkit():
         stock_change = metrics.get('stock_change', 0)  # 默认值改为0
         egg_damage_rate = metrics.get('egg_damage_rate', 0.0)
 
-        content = f"""# {farm_id} 养殖日志 - {date}
+        content = f"""#养殖日志 - {date}
 ## 生产运营指标
 - 存栏量：{metrics.get('stock_quantity', 0)}羽（环比{stock_change:.1f}%）
 - 当日产蛋：{metrics.get('daily_egg_production', 0)}枚（破损率{egg_damage_rate:.1f}%）
@@ -139,12 +138,13 @@ class PoultryLogToolkit():
 {self._format_log_sections(log_categories)}
 """     
         
-        filename = f"{farm_id}_日志_{date}.md"
+        filename = f"养殖日志_{date}.md"
         self.write_to_file(content.strip(),filename)
         return {
             "filename": filename,
             "content": content.strip(),
-            "filepath":f'./output/{filename}'
+            "filepath":f'./output/{filename}',
+            "status":'success'
         }
         
     def _format_log_sections(self, log_categories: Dict) -> str:
