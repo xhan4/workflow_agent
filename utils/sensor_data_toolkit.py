@@ -8,14 +8,12 @@ class SensorDataToolkit():
     
     def generate_sensor_data(
         self, 
-        farm_id: str,
         shed_id: str,
         date: Optional[Union[datetime, str]] = None
     ) -> Dict:
         """获取养殖场传感器数据（支持指定日期）
         
         Args:
-            farm_id: 养殖场ID
             shed_id: 鸡舍编号
             date: 可选日期（datetime对象或YYYY-MM-DD字符串）
             
@@ -44,7 +42,6 @@ class SensorDataToolkit():
         daily_production = round(inventory * laying_rate / 100)
         
         return {
-            "farm_id": farm_id,
             "shed_id": shed_id,
             "timestamp": timestamp,
             "stock_quantity": inventory,  # 存储原始数值
@@ -77,7 +74,6 @@ class SensorDataToolkit():
     
     def generate_batch_data(
         self, 
-        farm_id: str, 
         batch_size: int = 5,
         days: int = 1
     ) -> List[Dict]:
@@ -97,7 +93,6 @@ class SensorDataToolkit():
                 "date": (base_date + timedelta(days=d)).strftime("%Y-%m-%d"),
                 "sheds": [
                     self.generate_sensor_data(
-                        farm_id=farm_id,
                         shed_id=f"SHED-{i:03d}",
                         date=base_date + timedelta(days=d)
                     )
