@@ -1,54 +1,49 @@
-from collections import defaultdict
-import re
-from typing import Dict, List, Any
 from datetime import datetime
-
+from typing import Any, Union, Dict
 from utils.file_write_toolkit import FileWriteToolkit
-from utils.sensor_data_toolkit import SensorDataToolkit
-
-class PoultryLogToolkit():
-    name = "poultry_log_tool"
-    description = "符合农业农村部规范的智能化养鸡场日志生成工具"
-    
+from dotenv import load_dotenv
+load_dotenv()
+class PoultryLogToolkit:
     def __init__(self):
-        self.data_provider = SensorDataToolkit()
         self.write_to_file = FileWriteToolkit(output_dir="./output").write_to_file
-        # 新增日志存储
-        self.log_entries = []
+        self.report_template = """# 养殖日志 - {date}
+## 环境监测数据
+- 温度监测：
+  - 温度1: {in_temperature1}℃
+  - 温度2: {in_temperature2}℃
+  - 温度3: {in_temperature3}℃
+  - 温度4: {in_temperature4}℃
+  - 温度5: {in_temperature5}℃
+- 湿度监测：
+  - 湿度1: {in_humidity1}%
+  - 湿度2: {in_humidity2}%
+  - 湿度3: {in_humidity3}%
+  - 湿度4: {in_humidity4}%
+  - 湿度5: {in_humidity5}%
+- 其他环境参数：
+  - 风速1: {in_windspeed1}m/s
+  - 风速2: {in_windspeed2}m/s
+  - 光照强度1: {in_light1}lux
+  - 光照强度2: {in_light2}lux
+  - 气压: {in_kpa}kPa
+  - CO₂浓度1: {in_cardioxide1}ppm
+  - CO₂浓度2: {in_cardioxide2}ppm
+  - PM10_1: {in_pm10_1}μg/m³
+  - PM2.5_1: {in_pm25_1}μg/m³
+  - PM10_2: {in_pm10_2}μg/m³
+  - PM2.5_2: {in_pm25_2}μg/m³
+  - 氨气浓度: {in_ammonia1}ppm
+- 设备状态：
+  - 电力状态: {in_electric}
+  - 水位状态: {in_water}
 
-    def generate_log_entry(
-        self,
-        timestamp: str,
-        activity: str,
-        issues: List[str],
-        measures: List[str],
-        responsibler: str,
-        log_level: str = "INFO"
-    ) -> str:
-        """生成单条日志条目（符合现代化日志规范
+## 异常预警
+{alerts}
+"""
 
-        Args:
-            timestamp: ISO8601格式时间戳（如2025-03-23T14:30:00）
-            activity: 养殖活动类型（如环境控制/喂养管理）
-            issues: 发现的问题列表
-            measures: 采取的措施列表
-            responsibler: 责任人姓名
-            log_level: 日志级别（DEBUG/INFO/WARN/ERROR）
-
-        Returns:
-            格式化日志字符串
-        """
-        return (
-            f"[{timestamp}] [{log_level}] [PoultryFarm] "
-            f"Activity: {activity} | "
-            f"Issues: {'; '.join(issues) if issues else '无'} | "
-            f"Measures: {'; '.join(measures)} | "
-            f"Responsibler: {responsibler}"
-        )
-    
     def generate_daily_report(
         self,
-        date: str,
+        date_str: str,
     ) -> Dict[str, Any]:
         """生成某一天的养殖场日志报告，并保存到文件
         
@@ -62,100 +57,87 @@ class PoultryLogToolkit():
         Raises:
             ValueError: 日期格式或日志格式校验失败
         """
-        # 参数校验增强 [[9]]
-        if not re.match(r'^\d{4}-\d{2}-\d{2}$', date):
-            raise ValueError("日期格式必须为YYYY-MM-DD")
-        # 初始化日志条目 [[3]]
-        log_entries = []
-        metrics = self.data_provider.generate_sensor_data("鸡舍001", date)
+        try:
+            target_date = datetime.strptime(date_str, "%Y-%m-%d")  # 验证日期格式 [[6]]
+        except ValueError:
+            return "日期格式错误，请使用YYYY-MM-DD格式 [[6]]"
         
-        # 自动预警逻辑增强
-        if metrics.get('temperature', 0) > 25:
-            log_entries.append(self.generate_log_entry(
-                timestamp=datetime.now().isoformat(),
-                activity="环境控制",
-                issues=["温度异常"],
-                measures=["启动应急通风"],
-                responsibler="系统自动",
-                log_level="WARN"
-            ))
-            
-        # 添加手动日志（示例）
-        log_entries.extend(self.log_entries)  # 使用类属性存储日志
-
-        # 日志解析逻辑优化 [[4]]
-        log_categories = defaultdict(lambda: defaultdict(list))
-        for entry in log_entries:
-            match = re.match(
-                r'^\[(?P<timestamp>[\d-]+T[\d:]+)\]\s*'
-                r'\[(?P<level>\w+)\]\s*'
-                r'\[PoultryFarm\]\s*'
-                r'Activity:\s*(?P<activity>.*?)\s*\|\s*'
-                r'Issues:\s*(?P<issues>.*?)\s*\|\s*'
-                r'Measures:\s*(?P<measures>.*?)\s*\|\s*'
-                r'Responsibler:\s*(?P<responsibler>.+)$',
-                entry
-            )
-            if not match:
-                raise ValueError(f"日志格式错误: {entry}")
-                
-            data = match.groupdict()
-            category = data['activity']
-            level = data['level']
-            log = (
-                f"{data['timestamp']} | "
-                f"Issues: {data['issues']} | "
-                f"Measures: {data['measures']} | "
-                f"By: {data['responsibler']}"
-            )
-            log_categories[category][level].append(log)
-        stock_change = metrics.get('stock_change', 0)  # 默认值改为0
-        egg_damage_rate = metrics.get('egg_damage_rate', 0.0)
-
-        content = f"""#养殖日志 - {date}
-## 生产运营指标
-- 存栏量：{metrics.get('stock_quantity', 0)}羽（环比{stock_change:.1f}%）
-- 当日产蛋：{metrics.get('daily_egg_production', 0)}枚（破损率{egg_damage_rate:.1f}%）
-- 饲料转化率：{metrics.get('feed_conversion_rate', 0.0):.2f}kg/kg
-- 死亡率：{metrics.get('mortality_rate', 0.0):.2f}%（周累计{metrics.get('weekly_mortality_rate', 0.0):.1f}%）
-
-## 资源管理
-- 饲料库存：{metrics.get('feed_inventory', 0)}吨（有效期至{metrics.get('feed_expiry_date', 'N/A')}）
-- 水耗：{metrics.get('water_consumption', 0)}m³（循环率{metrics.get('water_recycling_rate', 0)}%）
-- 能源消耗：{metrics.get('energy_consumption', 0)}kWh（绿能占比{metrics.get('renewable_energy_ratio', 0)}%）
-
-## 环境监测
-- 温度：{metrics.get('temperature', 0)}℃（波动±{metrics.get('temperature_fluctuation', 0.0):.1f}℃）
-- 湿度：{metrics.get('humidity', 0)}%RH
-- 通风量：{metrics.get('ventilation_volume', 0)}m³/h（CO₂浓度{metrics.get('co2_concentration', 0)}ppm）
-
-## 生物安全
-- 疫苗接种：{metrics.get('vaccination_count', 0)}剂次（类型{metrics.get('vaccine_type', 'N/A')}）
-- 消毒记录：{metrics.get('disinfection_count', 0)}次（药剂{metrics.get('disinfectant_type', 'N/A')}）
-- 异常病例：{metrics.get('abnormal_cases', 0)}例（处理{metrics.get('case_handling', '无')}）
-
-## 操作日志（PDCA循环记录）
-{self._format_log_sections(log_categories)}
-"""     
+        data = self._fetch_data_by_date(date_str)
+        if not data:
+            return f"未找到{date_str}的记录"
         
-        filename = f"养殖日志_{date}.md"
-        self.write_to_file(content.strip(),filename)
+        # 日期格式化 [[5]]
+        date_formatted = datetime.strptime(data['add_time'], "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
+        alerts = self._generate_alerts(data)
+        
+        # 使用Jinja2风格模板渲染 [[6]]
+        content = self.report_template.format(
+            date=date_formatted,
+            **{k: data.get(k, "N/A") for k in [
+                'in_temperature1','in_temperature2','in_temperature3',
+                'in_temperature4','in_temperature5','in_humidity1',
+                'in_humidity2','in_humidity3','in_humidity4','in_humidity5',
+                'in_windspeed1','in_windspeed2','in_light1','in_light2',
+                'in_kpa','in_cardioxide1','in_cardioxide2','in_pm10_1',
+                'in_pm25_1','in_pm10_2','in_pm25_2','in_ammonia1',
+                'in_electric','in_water'
+            ]},
+            alerts=alerts
+        )
+        
+        # 新增文件保存逻辑 [[8]]
+        filename = f"养殖日志_{date_formatted}.md"
+        self.write_to_file(content.strip(), filename)
         return {
             "filename": filename,
             "content": content.strip(),
-            "filepath":f'./output/{filename}',
-            "status":'success'
+            "filepath": f'./output/{filename}',
+            "status": 'success'
         }
-        
-    def _format_log_sections(self, log_categories: Dict) -> str:
-        """格式化日志章节（策略模式优化） [[10]]"""
-        if not log_categories:
-            return "无记录"
-            
-        sections = []
-        for category, levels in log_categories.items():
-            section = f"### {category}\n"
-            for level, logs in levels.items():
-                section += f"#### {level}级别\n" + '\n'.join([f"- {log}" for log in logs])
-            sections.append(section)
-        return '\n'.join(sections)
+
+    def _fetch_data_by_date(self, date_str: str) -> dict:
+        """模拟根据传入日期获取数据（此处可替换为真实数据源）"""
+        return {
+            "id": "1",
+            "add_time": f"{date_str} 16:02:57",
+            "in_temperature1": "26.520",
+            "in_humidity1": "48",
+            "in_temperature2": "16.290",
+            "in_humidity2": "52",
+            "in_temperature3": "17.250",
+            "in_humidity3": "47",
+            "in_temperature4": "17.400",
+            "in_humidity4": "50",
+            "in_temperature5": "16.610",
+            "in_humidity5": "54",
+            "in_windspeed1": "0.490",
+            "in_windspeed2": "0.540",
+            "in_light1": "218.000",
+            "in_light2": "104.000",
+            "in_kpa": "-3.530",
+            "in_cardioxide1": "600.640",
+            "in_cardioxide2": "512.400",
+            "in_pm10_1": "48.710",
+            "in_pm25_1": "43.700",
+            "in_pm10_2": "5.750",
+            "in_pm25_2": "7.750",
+            "in_ammonia1": "1.090",
+            "in_electric": "正常",
+            "in_water": "正常"
+        }
+
+    def _generate_alerts(self, data: dict) -> str:
+        """根据传感器数据生成异常预警"""
+        alerts = []
+        if float(data.get('in_temperature1',0)) > 25:
+            alerts.append("⚠️ 温度1超过安全阈值（>25℃）")
+        if float(data.get('in_cardioxide1',0)) > 500:
+            alerts.append("⚠️ CO₂浓度1超过安全阈值（>500ppm）")
+        if data.get('in_ammonia1') != '0.000':
+            alerts.append("⚠️ 检测到氨气浓度异常")
+        return '\n'.join(alerts) if alerts else "无异常"
+
+# # 使用示例
+# if __name__ == "__main__":
+#     report = DailyReportGenerator().generate("2024-03-04")
+#     print(report)
