@@ -53,15 +53,12 @@ class PoultryLogToolkit():
     ) -> Dict[str, Any]:
         """生成某一天的养殖场日志报告，并保存到文件
         
-        Args:
+       参数：
             farm_id: 养殖场编码（GB/T 38156-2019）
             date: 日期（YYYY-MM-DD）
 
-        Returns:
-            包含文件名、日志内容,及文件存放的路径，此时已成功生成日志
-            
-        Raises:
-            ValueError: 日期格式或日志格式校验失败
+        返回:
+            包含文件名、日志内容,及文件存放的路径
         """
         # 参数校验增强 [[9]]
         if not re.match(r'^\d{4}-\d{2}-\d{2}$', date):

@@ -1,3 +1,4 @@
+import logging
 import re
 import os
 import time
@@ -13,7 +14,8 @@ from utils.query_engine_toolkit import QueryEngineToolkit
 from prompt import gen_prompt
 
 from dotenv import load_dotenv
-
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 load_dotenv()
 def main():
     save_tool = FunctionTool.from_defaults(fn=FileWriteToolkit(output_dir="./output").write_to_file)
