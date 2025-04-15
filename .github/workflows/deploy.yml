@@ -1,0 +1,78 @@
+name: Mirror the Github organization repos to Gitee and Deploy to Aliyun Docker
+
+on:
+  push:
+    branches:
+      - master  # 监听 master 分支的推送
+
+jobs:
+ sync-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+     # 检查 commit 中是否包含 sync 关键字
+    - name: Check commit message
+      run: |
+        if [[ "${{ github.event.head_commit.message }}" == *"#sync#"* ]]; then
+          echo "SYNC=true" >> $GITHUB_ENV
+        else
+          echo "SYNC=false" >> $GITHUB_ENV
+        fi
+      # 镜像Github组织仓库到Gitee
+    - name: Mirror the Github organization repos to Gitee.
+      if: env.SYNC == 'true'
+      uses: Yikun/hub-mirror-action@master
+      with:
+        src: 'github/xhan4'
+        dst: 'gitee/fuming1'
+        dst_key: ${{ secrets.GITEE_PRIVATE_KEY }}
+        dst_token:  ${{ secrets.GITEE_TOKEN }}
+        static_list: "workflow-agent"
+        force_update: true
+    # #目录权限
+    # - name: Reset permissions for checkout
+    #   run: |
+    #     sudo chown -R runner:runner /home/runner/work/workflow-agent/workflow-agent
+    #     sudo chmod -R 755 /home/runner/work/workflow-agent/workflow-agent
+    # 检出代码
+    - name: Checkout code
+      uses: actions/checkout@v3
+  
+    # 设置 SSH 密钥以便进行远程连接
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    # 添加远程主机的公钥到 known_hosts
+    - name: Add SSH host key to known_hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H 101.200.160.131 >> ~/.ssh/known_hosts || true
+        chmod 644 ~/.ssh/known_hosts
+
+    # 上传源代码到服务器，并排除 .git 目录
+    - name: Upload source code to server (excluding .git)
+      run: |
+        rsync -av --exclude='.git' --delete ./ root@101.200.160.131:/workspace/deploy/workflow-agent/
+        
+    # 部署到服务器
+    - name: Deploy Docker containers to server
+      run: |
+        # 启用错误检查，确保命令失败时会中止并报告错误
+        set -e
+        ssh -vT root@101.200.160.131 << 'EOF'
+          # 切换到应用目录
+          cd /workspace/deploy/workflow-agent/
+          # 设置环境变量 DATE_TAG
+          export DATE_TAG=$(date +%Y%m%d)
+          # 关闭容器
+          docker-compose stop
+          # 删除容器
+          docker-compose down
+          # 构建并启动 Docker 容器，并输出更多调试信息
+          docker-compose up -d --build  # 强制构建并启动容器
+          # 对空间进行自动清理
+          docker system prune -a -f
+          # 检查 Docker 容器状态
+          docker ps -a
+        EOF

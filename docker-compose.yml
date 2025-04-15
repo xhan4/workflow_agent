@@ -1,0 +1,15 @@
+# 根目录/docker-compose.yml
+services:
+  workflow-agent:
+    container_name: workflow-agent${DATE_TAG} #设置容器名称
+    image: workflow-agent:${DATE_TAG} #使用在构建时设置的日期标签
+    build:
+      context: . # 构建上下文，通常是当前目录
+      dockerfile: Dockerfile # Dockerfile 文件的位置
+    ports:
+      - '3004:8000'
+    networks:
+      - web_net 
+networks:
+  web_net:
+    driver: bridge # 使用桥接网络模式

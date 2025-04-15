@@ -1,9 +1,9 @@
 llama_index
 vosk
 SpeechRecognition
-llama_index.vector_stores.chroma
-pyaudio
+# llama_index.vector_stores.chroma
+# pyaudio
 llama_index.llms.ollama
 pynput
-openpyxl
-llama_index.embeddings.huggingface
+uvicorn
+# llama_index.embeddings.huggingface

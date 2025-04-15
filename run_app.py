@@ -38,9 +38,9 @@ app.add_middleware(
 )
 
 sessions = {}
-
+output_dir = os.getenv("OUTPUT_DIR", "./output") 
 def initialize_agent():
-    save_tool = FunctionTool.from_defaults(fn=FileWriteToolkit(output_dir="./output").write_to_file)
+    save_tool = FunctionTool.from_defaults(fn=FileWriteToolkit(output_dir=output_dir).write_to_file)
     date_tool = FunctionTool.from_defaults(fn=DateQueryToolkit().get_current_date)
     log_tool = FunctionTool.from_defaults(fn=PoultryLogToolkit().generate_daily_report)
     
@@ -58,7 +58,7 @@ def initialize_agent():
         context=gen_prompt()
     )
 
-@app.post("/create_chat", response_model=dict)
+@app.post("/api/create_chat", response_model=dict)
 def create_session():
     session_id = str(uuid.uuid4())
     agent = initialize_agent()
@@ -69,7 +69,7 @@ class ChatRequest(BaseModel):
     user_input: str
     session_id: str  # 必须提供会话ID[[5]]
 
-@app.post("/chat", response_model=dict)
+@app.post("/api/chat", response_model=dict)
 def chat_endpoint(request: ChatRequest):
     session_id = request.session_id
     agent = sessions.get(session_id)
@@ -113,7 +113,7 @@ def chat_endpoint(request: ChatRequest):
                 "status": "error"
             }
         )
-@app.delete("/delete_session/{session_id}", response_model=dict)
+@app.delete("/api/delete_session/{session_id}", response_model=dict)
 def delete_session(session_id: str):
     """删除指定会话接口[[1]][[3]]"""
     if session_id in sessions:
