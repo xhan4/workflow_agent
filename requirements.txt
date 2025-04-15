@@ -6,4 +6,5 @@ SpeechRecognition
 llama_index.llms.ollama
 pynput
 uvicorn
+fastapi
 # llama_index.embeddings.huggingface
