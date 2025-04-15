@@ -58,7 +58,7 @@ def initialize_agent():
         context=gen_prompt()
     )
 
-@app.post("/api/create_chat", response_model=dict)
+@app.post("/create_chat", response_model=dict)
 def create_session():
     session_id = str(uuid.uuid4())
     agent = initialize_agent()
@@ -69,7 +69,7 @@ class ChatRequest(BaseModel):
     user_input: str
     session_id: str  # 必须提供会话ID[[5]]
 
-@app.post("/api/chat", response_model=dict)
+@app.post("/chat", response_model=dict)
 def chat_endpoint(request: ChatRequest):
     session_id = request.session_id
     agent = sessions.get(session_id)
@@ -113,7 +113,7 @@ def chat_endpoint(request: ChatRequest):
                 "status": "error"
             }
         )
-@app.delete("/api/delete_session/{session_id}", response_model=dict)
+@app.delete("/delete_session/{session_id}", response_model=dict)
 def delete_session(session_id: str):
     """删除指定会话接口[[1]][[3]]"""
     if session_id in sessions:
