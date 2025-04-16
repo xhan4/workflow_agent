@@ -20,6 +20,8 @@ from prompt import gen_prompt
 
 from dotenv import load_dotenv
 
+from utils.weather_toolkit import WeatherToolkit
+
 # 初始化日志和环境变量
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
@@ -43,6 +45,7 @@ def initialize_agent():
     save_tool = FunctionTool.from_defaults(fn=FileWriteToolkit(output_dir=output_dir).write_to_file)
     date_tool = FunctionTool.from_defaults(fn=DateQueryToolkit().get_current_date)
     log_tool = FunctionTool.from_defaults(fn=PoultryLogToolkit().generate_daily_report)
+    weather_tool = FunctionTool.from_defaults(fn=WeatherToolkit().get_weather)
     
     llm = Ollama(
         model=os.getenv("MODEL_NAME"),
@@ -51,7 +54,7 @@ def initialize_agent():
     )
     
     return ReActAgent.from_tools(
-        [save_tool, date_tool, log_tool],
+        [save_tool, date_tool, log_tool, weather_tool],
         llm=llm,
         verbose=True,
         max_iterations=10,
@@ -67,7 +70,7 @@ def create_session():
 
 class ChatRequest(BaseModel):
     user_input: str
-    session_id: str  # 必须提供会话ID[[5]]
+    session_id: str  # 必须提供会话ID
 
 @app.post("/chat", response_model=dict)
 def chat_endpoint(request: ChatRequest):

@@ -7,4 +7,5 @@ llama_index.llms.ollama
 pynput
 uvicorn
 fastapi
+requests
 # llama_index.embeddings.huggingface
