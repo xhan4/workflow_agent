@@ -3,10 +3,12 @@ from .file_write_toolkit import FileWriteToolkit
 from .sensor_data_toolkit import SensorDataToolkit
 from .poultry_log_toolkit2 import PoultryLogToolkit
 from .weather_toolkit import WeatherToolkit
+from .wiki_sarch_toolkit import WikipediaSearchTool
 __all__ = [
      "DateQueryToolkit",
      "FileWriteToolkit",
      "SensorDataToolkit",
      "PoultryLogToolkit",
-     "WeatherToolkit"
+     "WeatherToolkit",
+     "WikipediaSearchTool"
 ]

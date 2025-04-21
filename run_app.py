@@ -3,7 +3,6 @@ import re
 import os
 import time
 import uuid
-from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,6 +20,7 @@ from prompt import gen_prompt
 from dotenv import load_dotenv
 
 from utils.weather_toolkit import WeatherToolkit
+from utils.wiki_sarch_toolkit import WikipediaSearchTool
 
 # 初始化日志和环境变量
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -46,7 +46,7 @@ def initialize_agent():
     date_tool = FunctionTool.from_defaults(fn=DateQueryToolkit().get_current_date)
     log_tool = FunctionTool.from_defaults(fn=PoultryLogToolkit().generate_daily_report)
     weather_tool = FunctionTool.from_defaults(fn=WeatherToolkit().get_weather)
-    
+    wiki_tool = WikipediaSearchTool(lang="zh", top_k=3).as_query_engine()
     llm = Ollama(
         model=os.getenv("MODEL_NAME"),
         base_url=os.getenv("BASE_URL"), 
@@ -54,7 +54,7 @@ def initialize_agent():
     )
     
     return ReActAgent.from_tools(
-        [save_tool, date_tool, log_tool, weather_tool],
+        [save_tool, date_tool, log_tool,wiki_tool,weather_tool],
         llm=llm,
         verbose=True,
         max_iterations=10,
@@ -118,7 +118,7 @@ def chat_endpoint(request: ChatRequest):
         )
 @app.delete("/delete_session/{session_id}", response_model=dict)
 def delete_session(session_id: str):
-    """删除指定会话接口[[1]][[3]]"""
+    """删除指定会话接口"""
     if session_id in sessions:
         del sessions[session_id]
         return {
