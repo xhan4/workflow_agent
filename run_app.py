@@ -198,7 +198,7 @@ class StreamingCallbackHandler(BaseCallbackHandler):
                     "content": char,
                     "action_id": action_id
                 })
-                time.sleep(0.05)
+                time.sleep(0.03)
         else:
             # 其他类型的消息，发送完整消息
             for char in text:
@@ -207,7 +207,7 @@ class StreamingCallbackHandler(BaseCallbackHandler):
                     "content": char,
                     "action_id": action_id
                 })
-                time.sleep(0.05)
+                time.sleep(0.03)
             
         # 添加换行符
         self.queue.put({
@@ -507,7 +507,7 @@ async def chat_endpoint(request: ChatRequest):
                             # 对于每个字符都发送完整的行为信息
                             for char in log_data["content"]:
                                 yield f'data: {json.dumps({"type": log_data["type"], "content": char, "action_id": log_data["action_id"]})}\n\n'
-                                await asyncio.sleep(0.05)
+                                await asyncio.sleep(0.03)
                     else:
                         yield f'data: {json.dumps(log_data)}\n\n'
 
@@ -532,7 +532,7 @@ async def chat_endpoint(request: ChatRequest):
                         yield f'data: {json.dumps({"type": "error", "content": str(e), "action_id": action_id, "is_complete": True})}\n\n'
                         break
                 else:
-                    await asyncio.sleep(0.05)
+                    await asyncio.sleep(0.03)
 
             yield 'data: {"type": "done"}\n\n'
         finally:
