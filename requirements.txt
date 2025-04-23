@@ -1,12 +1,15 @@
-llama_index
-vosk
-SpeechRecognition
+fastapi>=0.68.0
+uvicorn>=0.15.0
+python-dotenv>=0.19.0
+langchain>=0.1.0
+langchain-core>=0.1.0
+langchain-community>=0.0.10
+pydantic>=2.0.0
+requests>=2.26.0
+python-dateutil>=2.8.2
+wikipedia>=1.4.0
 # llama_index.vector_stores.chroma
 # pyaudio
 llama_index.llms.ollama
 pynput
-uvicorn
-fastapi
-requests
-wikipedia
 # llama_index.embeddings.huggingface

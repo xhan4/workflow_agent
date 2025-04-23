@@ -55,9 +55,11 @@ class PoultryLogToolkit:
             包含文件名、日志内容,及文件存放的路径
         """
         try:
-            target_date = datetime.strptime(date_str, "%Y-%m-%d")  # 验证日期格式 [[6]]
+            # 清理日期字符串中的引号和空格
+            date_str = date_str.strip().strip('"\'')
+            target_date = datetime.strptime(date_str, "%Y-%m-%d")  # 验证日期格式
         except ValueError:
-            return "日期格式错误，请使用YYYY-MM-DD格式 [[6]]"
+            return "日期格式错误，请使用YYYY-MM-DD格式，例如：2024-04-24"
         
         data = self._fetch_data_by_date(date_str)
         if not data:

@@ -5,7 +5,7 @@ class DateQueryToolkit():
     name = "date_acquisition_tool"
     description = "符合ISO 8601标准的日期时间获取工具"
     
-    def get_current_date(self) -> str:
+    def get_current_date(self, *args, **kwargs) -> str:
         """获取当前日期（YYYY-MM-DD格式）
         
         Returns:
@@ -19,4 +19,4 @@ class DateQueryToolkit():
         Returns:
             当前时间戳字符串
         """
-        return datetime.new().isoformat()
+        return datetime.now().isoformat()
